@@ -105,11 +105,13 @@ def get_generator_cmd(simulator, simulator_yaml, cov, exp, debug_cmd):
                     if exp:
                         compile_cmd[i] += " +define+EXPERIMENTAL "
             sim_cmd = entry['sim']['cmd']
+            # print(sim_cmd)
             if ('cov_opts' in entry['sim']) and cov:
                 sim_cmd = re.sub('<cov_opts>',
                                  entry['sim']['cov_opts'].rstrip(), sim_cmd)
             else:
                 sim_cmd = re.sub('<cov_opts>', '', sim_cmd)
+            # print(sim_cmd) # Since no instance of <cov_opts> in sim_cmd -> no change
             if 'env_var' in entry:
                 for env_var in entry['env_var'].split(','):
                     for i in range(len(compile_cmd)):
@@ -277,7 +279,9 @@ def do_simulate(sim_cmd, simulator, test_list, cwd, sim_opts, seed_gen,
     sim_cmd = re.sub("<out>", os.path.abspath(output_dir), sim_cmd)
     sim_cmd = re.sub("<cwd>", cwd, sim_cmd)
     sim_cmd = re.sub("<sim_opts>", sim_opts, sim_cmd)
+    # print("Simulation command in gen->do_simulate: {}".format(sim_cmd)) 
 
+    print("cwd: {},testlist:{},csr_file{}".format(cwd, test_list,csr_file))
     logging.info("Running RISC-V instruction generator")
     sim_seed = {}
     for test in test_list:
@@ -293,9 +297,12 @@ def do_simulate(sim_cmd, simulator, test_list, cwd, sim_opts, seed_gen,
                 batch_cnt = 1
                 if batch_size > 0:
                     batch_cnt = int((iterations + batch_size - 1) / batch_size)
+                    # ceil(iterations / batch_size)
                 logging.info(
                     "Running {} with {} batches".format(test['test'],
                                                         batch_cnt))
+                # print("Batch count: {},Batch size:{}".format(batch_cnt, batch_size))
+                #default batch size is 1, so no batching ,bath_cnt = 1
                 for i in range(0, batch_cnt):
                     test_id = '{}_{}'.format(test['test'], i)
                     rand_seed = seed_gen.get(test_id, i * batch_cnt)
@@ -306,6 +313,7 @@ def do_simulate(sim_cmd, simulator, test_list, cwd, sim_opts, seed_gen,
                     if simulator == "pyflow":
                         sim_cmd = re.sub("<test_name>", test['gen_test'],
                                          sim_cmd)
+                        # print("sim_cmd at do_simulate(): {}".format(sim_cmd))
                         cmd = lsf_cmd + " " + sim_cmd.rstrip() + \
                               (" --num_of_tests={}".format(test_cnt)) + \
                               (" --start_idx={}".format(i * batch_size)) + \
@@ -336,6 +344,7 @@ def do_simulate(sim_cmd, simulator, test_list, cwd, sim_opts, seed_gen,
                             test['gen_opts'] = re.sub("\+", "--",
                                                       test['gen_opts'])
                             cmd += test['gen_opts']
+                            # print("Generator options: {}".format(test['gen_opts']))
                         else:
                             cmd += test['gen_opts']
                     if not re.search("c", isa):
@@ -346,6 +355,7 @@ def do_simulate(sim_cmd, simulator, test_list, cwd, sim_opts, seed_gen,
                         logging.info(
                             "Running {}, batch {}/{}, test_cnt:{}".format(
                                 test['test'], i + 1, batch_cnt, test_cnt))
+                        print("Command to run at do_simulate(): {}".format(cmd))
                         run_cmd(cmd, timeout_s,
                                 check_return_code=check_return_code,
                                 debug_cmd=debug_cmd)
@@ -384,6 +394,10 @@ def gen(test_list, argv, output_dir, cwd):
     compile_cmd, sim_cmd = get_generator_cmd(argv.simulator,
                                              argv.simulator_yaml, argv.cov,
                                              argv.exp, argv.debug)
+    # print("Compile command: {}".format(compile_cmd)) # None in pyflow
+    # print("Simulation command: {}".format(sim_cmd)) 
+    # Prints python3 <cwd>/pygen/pygen_src/test/<test_name>.py <sim_opts>
+    
     # Compile the instruction generator
     # No compilation process in pyflow simulator
     if not argv.so:
@@ -403,6 +417,7 @@ def gen(test_list, argv, output_dir, cwd):
                 gen_timeout = argv.gen_timeout
         else:
             gen_timeout = argv.gen_timeout
+        # do_simulate(python3 <cwd>/pygen/pygen_src/test/<test_name>.py <sim_opts>,pyflow,arithmetic,riscv-dv/,sim_opts="",seed_gen,csr_yaml,rv32imc_csr,fencei,"0","",1200,"",.....)
         do_simulate(sim_cmd, argv.simulator, test_list, cwd, argv.sim_opts,
                     seed_gen,
                     argv.csr_yaml, argv.isa, argv.end_signature_addr,
@@ -456,17 +471,21 @@ def gcc_compile(test_list, output_dir, isa, mabi, opts, debug_cmd):
                     test_isa = re.sub(r"(rv.+?)c", r"\1", test_isa)
             # If march/mabi is not defined in the test gcc_opts, use the default
             # setting from the command line.
+            # print(cmd)
             if not re.search('march', cmd):
                 cmd += (" -march={}".format(test_isa))
             if not re.search('mabi', cmd):
                 cmd += (" -mabi={}".format(mabi))
             logging.info("Compiling {}".format(asm))
+            # print("GCC command for .o file : {}".format(cmd))
             run_cmd_output(cmd.split(), debug_cmd=debug_cmd)
             # Convert the ELF to plain binary, used in RTL sim
             logging.info("Converting to {}".format(binary))
             cmd = ("{} -O binary {} {}".format(
                 get_env_var("RISCV_OBJCOPY", debug_cmd=debug_cmd), elf, binary))
+            # print("GCC command for .bin file : {}".format(cmd))
             run_cmd_output(cmd.split(), debug_cmd=debug_cmd)
+            
 
 
 def run_assembly(asm_test, iss_yaml, isa, mabi, gcc_opts, iss_opts, output_dir,
@@ -690,6 +709,7 @@ def iss_sim(test_list, output_dir, iss_list, iss_yaml, iss_opts,
                     if iss == "ovpsim":
                         run_cmd(cmd, timeout_s, debug_cmd=debug_cmd)
                     else:
+                        # print("ISS command: {}".format(cmd))
                         run_cmd(cmd, timeout_s, debug_cmd=debug_cmd)
                     logging.debug(cmd)
 
@@ -1069,6 +1089,8 @@ def main():
         c_directed_list = []
 
         if not args.co:
+            print("testlist:{},cwdreffffwffw:{}".format(args.testlist,cwd))
+            # print("HELOOOooooooooooooooo")
             process_regression_list(args.testlist, args.test, args.iterations,
                                     matched_list, cwd)
             for t in list(matched_list):
@@ -1091,6 +1113,9 @@ def main():
                     c_directed_list.append(t)
                     matched_list.remove(t)
 
+            # print("Matched test list: {}".format(matched_list)) # has test details
+            # print("Directed assembly test list: {}".format(asm_directed_list)) #None
+            # print("Directed C test list: {}".format(c_directed_list)) #None
             if len(matched_list) == 0 and len(asm_directed_list) == 0 and len(
                     c_directed_list) == 0:
                 sys.exit("Cannot find {} in {}".format(args.test, args.testlist))
@@ -1151,6 +1176,7 @@ def main():
 
             # Run remaining tests using the instruction generator
             gen(matched_list, args, output_dir, cwd)
+            #gen(arithmetic_basic,args,output_dir,cwd)
 
         if not args.co:
             # Compile the assembly program to ELF, convert to plain binary
@@ -1167,9 +1193,11 @@ def main():
 
             # Compare ISS simulation result
             if args.steps == "all" or re.match(".*iss_cmp.*", args.steps):
+
                 iss_cmp(matched_list, args.iss, output_dir,
                         args.stop_on_first_error,
                         args.exp, args.debug)
+                # Creates a report only when exactly two ISS are used
 
         sys.exit(RET_SUCCESS)
     except KeyboardInterrupt:

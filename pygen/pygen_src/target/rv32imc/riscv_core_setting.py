@@ -36,11 +36,11 @@ unsupported_instr = []
 supported_isa = [riscv_instr_group_t.RV32I, riscv_instr_group_t.RV32M, riscv_instr_group_t.RV32C]
 
 # Interrupt mode support
-supported_interrupt_mode = [mtvec_mode_t.DIRECT, mtvec_mode_t.VECTORED]
+supported_interrupt_mode = [mtvec_mode_t.VECTORED]
 
 # The number of interrupt vectors to be generated, only used if VECTORED
 # interrupt mode is supported
-max_interrupt_vector_num = 16
+max_interrupt_vector_num = 32
 
 # Physical memory protection support
 support_pmp = 0

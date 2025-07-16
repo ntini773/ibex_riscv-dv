@@ -806,15 +806,11 @@ class riscv_asm_program_gen:
             self.instr_stream.append(".align 12")
         else:
             self.instr_stream.append(".align {}".format(cfg.tvec_alignment))
-        # logging.info("instr_stream: %s", self.instr_stream)
-        #instr contains mtvec handler by here
-        logging.info("instr: %s", instr)
         tvec_name = tvec.name
         logging.info("Generating {} trap handler for hart {}".format(tvec_name, hart))
+        self.instr_stream.append("699999")
         self.gen_section(pkg_ins.get_label("{}_handler".format(tvec_name.lower()), hart), instr)
-        # logging.info("instr_stream: %s", self.instr_stream)
-
-
+        logging.info("fwefekjfjkweffkjfnfjkfjkfkjfkjef")
         # Exception handler
         instr = []
         if cfg.mtvec_mode == mtvec_mode_t.VECTORED:
@@ -841,7 +837,6 @@ class riscv_asm_program_gen:
                       # use JALR to jump to test_done.
                       "1: la x{}, test_done".format(cfg.scratch_reg),
                       "jalr x1, x{}, 0".format(cfg.scratch_reg)))
-        # logging.info("Instr:{}".format(instr.items()))
         self.gen_section(pkg_ins.get_label("{}mode_exception_handler".format(mode), hart), instr)
 
     # Generate for interrupt vector table
@@ -859,7 +854,6 @@ class riscv_asm_program_gen:
             instr.append("j {}{}mode_intr_vector_{}".format(pkg_ins.hart_prefix(hart), mode, i))
         if not cfg.disable_compressed_instr:
             instr.append(".option rvc;")
-        logging.info("Inside gen_interrupt_vector_table, instr: %s", instr)
         
         for i in range(1, rcs.max_interrupt_vector_num):
             intr_handler = []
@@ -883,7 +877,6 @@ class riscv_asm_program_gen:
             intr_handler.extend(("j {}{}mode_intr_handler".format(pkg_ins.hart_prefix(hart), mode),
                                  "1: la x{}, test_done".format(cfg.scratch_reg),
                                  "jalr x0, x{}, 0".format(cfg.scratch_reg)))
-            # logging.info("Intr_handler:%s",intr_handler)
             self.gen_section(pkg_ins.get_label(
                 "{}mode_intr_vector_{}".format(mode, i), hart), intr_handler)
     # ECALL trap handler
@@ -1060,11 +1053,11 @@ class riscv_asm_program_gen:
         if label != "":
             string = pkg_ins.format_string("{}:".format(label), pkg_ins.LABEL_STR_LEN)
             self.instr_stream.append(string)
-            logging.info("Generating section: %s", label)
+            # logging.info("Generating section: %s", label)
         for items in instr:
             string = pkg_ins.indent + items
             self.instr_stream.append(string)
-            # logging.info("string:{}".format(string))
+            logging.info("string:{}".format(string))
         self.instr_stream.append("")
 
     # Dump performance CSRs if applicable
