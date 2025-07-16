@@ -47,7 +47,7 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
         # 0x0 debug mode entry
         # self.instr_stream.append("j debug_rom")
         # self.instr_stream.append(".align 3")
-        # 0x8 debug mode exception handler
+        # # 0x8 debug mode exception handler
         # self.instr_stream.append("j debug_exception")
         # Align the start section to 0x80
         # self.instr_stream.append(".align 7")
@@ -325,5 +325,15 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
     def gen_test_end():
         pass
 
-    
-    
+# Functions mimiced with ibex_asm_program_gen.sv at 
+# https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/riscv_dv_extension/ibex_asm_program_gen.sv
+# are follows
+# gen_ecall_handler
+# gen_test_end (not implemented)
+# gen_debug_rom (implemented but not tested due to errors)
+# gen_test_done (implmented but not using due to errors ,without this many functions are not able to use test_done section)
+# 
+# gen_init_section (modified but not exactly with ibex)
+# gen_program_header (modified similar to ibex but not used debug rom and debug exception , so modified the function to make space for vector table)
+# gen_program (modified to put the trap handling vector table at the start of the program)
+# gen_trap_handler_section (modified to put the trap handling vector table at the start of the program)
