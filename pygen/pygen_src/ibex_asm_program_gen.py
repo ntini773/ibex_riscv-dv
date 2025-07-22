@@ -105,7 +105,7 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
             self.instr_stream.append(f"h{int(hart)}_start:")
             if not cfg.bare_program_mode: # its zero 
                 # logging.info("cfg.bare_program_mode is set to 0, generating init section")
-                # self.setup_misa() 
+                self.setup_misa() 
                 # Create all page tables
                 self.create_page_table(hart)
                 # Setup privileged mode registers and enter target privileged mode
@@ -300,9 +300,9 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
 
     #Re-define gen_test_done() to override the base-class with an empty implementation.
     #Then, our own overriding gen_program() can append new test_done code.
-    # def gen_test_done(self):
-    #     # The  gen_test_done function is causing issues 
-    #     pass
+    def gen_test_done(self):
+        """Override the base class gen_test_done with an empty implementation."""
+        pass
 
     def gen_init_section(self, hart):
         # This is a good location to put the test done and fail because PMP tests expect these
@@ -314,16 +314,37 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
         # This override of gen_init_section breaks that assumption so add a jump to main here so the
         # test starts correctly for configurations that don't support PMP.
 
-        if not rcs.support_pmp:
-            # Jump to main program
-            self.instr_stream.append("j main")
+        # if not rcs.support_pmp:
+        #     # Jump to main program
+        #     self.instr_stream.append("j main")
         
     #     # Add the gen_test_end functionality based on relevance 
+        self.gen_test_end(result=test_result_t.TEST_PASS, instr=instr)
+        self.instr_stream.append("test_done:")
+        self.instr_stream.extend(instr)
+        instr.clear()
+        self.gen_test_end(result=test_result_t.TEST_FAIL, instr=instr)
+        self.instr_stream.append("test_fail:")
+        self.instr_stream.extend(instr)
 
 
         
-    def gen_test_end():
-        pass
+    def gen_test_end(self, result, instr):
+        test_control_addr = cfg.signature_addr - 0x4
+        i = pkg_ins.indent
+        if cfg.bare_program_mode:
+            str_instr = f"{i}j write_tohost\n"
+            instr.append(str_instr)
+        else:
+            str_instr = [
+                f"{i}li x{cfg.gpr[1]}, 0x{test_control_addr:x}\n",
+                f"{i}li x{cfg.gpr[0]}, 0x{int(result):x}\n",
+                f"{i}slli x{cfg.gpr[0]}, x{cfg.gpr[0]}, 8\n",
+                f"{i}addi x{cfg.gpr[0]}, x{cfg.gpr[0]}, 0x{int(signature_type_t.TEST_RESULT):x}\n",
+                f"{i}sw x{cfg.gpr[0]}, 0(x{cfg.gpr[1]})\n",
+                f"{i}ecall\n"
+            ]
+            instr.extend(str_instr)
 
 # Functions mimiced with ibex_asm_program_gen.sv at 
 # https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/riscv_dv_extension/ibex_asm_program_gen.sv
@@ -337,3 +358,9 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
 # gen_program_header (modified similar to ibex but not used debug rom and debug exception , so modified the function to make space for vector table)
 # gen_program (modified to put the trap handling vector table at the start of the program)
 # gen_trap_handler_section (modified to put the trap handling vector table at the start of the program)
+
+
+# Ibex specific test_done and test_fail sections are generated when you uncomment the gen_init_section's override and gen_test_end function
+
+# Instead of typical <write_tohost> instruction , it writes 1 if test passes and 0 if test fails to the signature address. 0xdeadbeeb
+

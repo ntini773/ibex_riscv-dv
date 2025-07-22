@@ -230,7 +230,7 @@ class riscv_asm_program_gen:
                       sub_program_name, num_sub_program):
         if num_sub_program != 0:
             callstack_gen = riscv_callstack_gen()
-            self.callstack_gen.init(num_sub_program + 1)
+            callstack_gen.init(num_sub_program + 1)
             if callstack_gen.randomize():
                 idx = 0
                 # Insert the jump instruction based on the call stack
@@ -348,7 +348,7 @@ class riscv_asm_program_gen:
             self.randomize_vec_gpr_and_csr()
         self.core_is_initialized()
         self.gen_dummy_csr_write()
-        if rcs.support_pmp:
+        if not rcs.support_pmp:
             init_string = pkg_ins.indent + "j main"
             self.instr_stream.append(init_string)
 
@@ -1186,6 +1186,7 @@ class riscv_asm_program_gen:
             for i in range(instr_insert_cnt):
                 name = "{}_{}".format(instr_stream_name, i)
                 object_h = factory(instr_stream_name)
+                logging.info("I found object_h: %s", object_h)
                 object_h.name = name
                 if not object_h:
                     logging.critical("Cannot create instr stream %0s", name)

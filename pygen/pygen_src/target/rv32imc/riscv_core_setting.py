@@ -27,7 +27,7 @@ XLEN = 32
 SATP_MODE = satp_mode_t.BARE
 
 # Supported Privileged mode
-supported_privileged_mode = [privileged_mode_t.MACHINE_MODE]
+supported_privileged_mode = [privileged_mode_t.MACHINE_MODE,privileged_mode_t.USER_MODE]
 
 # Unsupported instructions
 unsupported_instr = []

@@ -35,6 +35,7 @@ The ibex_riscv-dv is a comprehensive RISC-V instruction generator framework desi
 ## Command Flow Analysis
 
 ### Example Command
+
 ```bash
 python3 run.py --test=riscv_arithmetic_basic_test --simulator=pyflow
 #If you want to run with specific steps:
@@ -84,6 +85,7 @@ args.start_seed = None                 # default
 args.seed = None                       # default
 args.seed_yaml = None                  # default
 ```
+
 ```
 If custom target is specified:
 args.core_setting_dir =args.custom_target
@@ -343,9 +345,11 @@ cfg.argv.seed = '14826882'
 2025-07-15 19:11:58,536 riscv_instr_base_test.py 89 INFO cfg.init_privil_mode = <vsc.types.enum_t object at 0x77910249e530>
 2025-07-15 19:11:58,536 riscv_instr_base_test.py 89 INFO cfg.tvec_ceil = <vsc.types.uint32_t object at 0x77910249ebc0>
 ```
+
 ### Step-by-Step Execution Flow
 
 #### 1. Configuration Loading
+
 The framework reads test configuration from `yaml/base_testlist.yaml`:
 
 ```yaml
@@ -367,6 +371,7 @@ The framework reads test configuration from `yaml/base_testlist.yaml`:
 ```
 
 #### 2. Simulator Configuration
+
 Reads `yaml/simulator.yaml` to get the pyflow simulator command:
 
 ```yaml
@@ -375,12 +380,14 @@ Reads `yaml/simulator.yaml` to get the pyflow simulator command:
     cmd: >
       python3 <cwd>/pygen/pygen_src/test/<test_name>.py <sim_opts>
 ```
+
 ```bash
 Main flow for asm generation is 
 main()->gen()->do_simulate()
 ```
 
 #### 3. Target Configuration
+
 Loads processor configuration from `target/rv32imc/` or `pygen/pygen_src/target/rv32imc/`:
 
 ```python
@@ -392,6 +399,7 @@ supported_isa = [RV32I, RV32M, RV32C]       # ISA extensions
 ```
 
 #### 4. Test Generation Process
+
 The framework executes the following phases:
 
 1. **Argument Processing**: Parse command line arguments and validate configurations
@@ -410,14 +418,17 @@ The framework executes the following phases:
 The Python-based generator creates assembly files through several key components:
 
 #### 1. Main Test Script (`pygen/pygen_src/test/riscv_instr_base_test.py`)
+
 - Creates test instances for specified iterations
 - Generates random seeds for reproducibility
 - Calls `riscv_asm_program_gen()` to create assembly programs
 
 #### 2. Program Generation (`pygen/pygen_src/riscv_asm_program_gen.py`)
+
 The core class that generates complete RISC-V assembly programs:
 
 **Key Methods:**
+
 - `gen_program()`: Main orchestration method
 - `gen_program_header()`: Creates program header and includes
 - `gen_init_section()`: Initializes registers and stack
@@ -427,6 +438,7 @@ The core class that generates complete RISC-V assembly programs:
 - `gen_test_file()`: Writes final assembly to file
 
 **Program Structure Generated:**
+
 ```assembly
 .include "user_define.h"
 .globl _start
@@ -443,7 +455,7 @@ jalr x0, x12, 0
 h0_start:
     li x31, 0x40001104      # Setup MISA
     csrw 0x301, x31
-    
+  
 kernel_sp:
     la x20, kernel_stack_end
 
@@ -457,20 +469,22 @@ init:
     li x0, 0xb
     li x1, 0x5
     # ... more register initialization
-    
+  
     # Main program instructions
     # ... generated instruction sequences
-    
+  
     # Exception handlers
     # ... trap and interrupt handlers
-    
+  
     # Data and stack sections
     .section .data
     .section .stack
 ```
 
 #### 3. Instruction Generation
+
 Various instruction library files generate:
+
 - **Random Instructions**: Based on supported ISA extensions
 - **Directed Instruction Streams**: Specific test patterns (e.g., `riscv_int_numeric_corner_stream`)
 - **Corner Case Testing**: Edge cases and boundary conditions
@@ -481,6 +495,7 @@ Various instruction library files generate:
 After assembly generation, the `gcc_compile()` function handles compilation:
 
 #### 1. GCC Compilation (.S → .o)
+
 ```bash
 riscv32-unknown-elf-gcc -static -mcmodel=medany -fvisibility=hidden \
     -nostdlib -nostartfiles -march=rv32imc -mabi=ilp32 \
@@ -489,6 +504,7 @@ riscv32-unknown-elf-gcc -static -mcmodel=medany -fvisibility=hidden \
 ```
 
 #### 2. Binary Generation (.o → .bin)
+
 ```bash
 riscv32-unknown-elf-objcopy -O binary \
     riscv_arithmetic_basic_test_0.o \
@@ -511,6 +527,7 @@ target/
 ```
 
 Each target contains:
+
 - `riscv_core_setting.sv`: SystemVerilog configuration
 - `riscv_core_setting.py`: Python equivalent
 - `testlist.yaml`: Target-specific tests
@@ -518,6 +535,7 @@ Each target contains:
 ### Key Configuration Parameters
 
 #### Processor Features
+
 ```systemverilog
 // Bit width of RISC-V GPR
 parameter int XLEN = 32;
@@ -536,6 +554,7 @@ riscv_instr_name_t unsupported_instr[] = {};
 ```
 
 #### Test Generation Options
+
 ```yaml
 gen_opts: >
   +instr_cnt=100              # Number of instructions
@@ -553,11 +572,13 @@ gen_opts: >
 To create a custom target:
 
 1. **Copy Existing Target**:
+
 ```bash
 cp -r target/rv32imc target/my_custom_target
 ```
 
 2. **Modify Configuration**:
+
 ```systemverilog
 // In riscv_core_setting.sv
 parameter int XLEN = 64;  // Change to 64-bit
@@ -565,6 +586,7 @@ riscv_instr_group_t supported_isa[] = {RV64I, RV64M, RV64A};
 ```
 
 3. **Run with Custom Target**:
+
 ```bash
 python3 run.py --custom_target target/my_custom_target \
     --isa rv64ima --mabi lp64 --test=my_test
@@ -573,6 +595,7 @@ python3 run.py --custom_target target/my_custom_target \
 ## Directory Structure
 
 ### Generated Output Structure
+
 ```
 out_<timestamp>/
 ├── asm_test/                    # Generated assembly tests
@@ -586,6 +609,7 @@ out_<timestamp>/
 ```
 
 ### Source Code Organization
+
 ```
 ibex_riscv-dv/
 ├── run.py                       # Main test runner
@@ -608,6 +632,7 @@ ibex_riscv-dv/
 ## Usage Examples
 
 ### Basic Test Generation
+
 ```bash
 # Generate arithmetic test with pyflow
 python3 run.py --test=riscv_arithmetic_basic_test --simulator=pyflow
@@ -620,6 +645,7 @@ python3 run.py --test=riscv_loop_test --iterations=5 --simulator=pyflow
 ```
 
 ### Advanced Options
+
 ```bash
 # Generate with custom seed
 python3 run.py --test=riscv_arithmetic_basic_test --seed=12345 --simulator=pyflow
@@ -633,6 +659,7 @@ python3 run.py --test=riscv_arithmetic_basic_test --verbose --simulator=pyflow
 ```
 
 ### Batch Generation
+
 ```bash
 # Generate all tests in testlist
 python3 run.py --testlist=yaml/base_testlist.yaml --simulator=pyflow
@@ -644,6 +671,7 @@ python3 run.py --test="riscv_*_test" --simulator=pyflow
 ## Advanced Features
 
 ### Directed Instruction Streams
+
 The framework supports directed instruction streams for focused testing:
 
 ```yaml
@@ -654,6 +682,7 @@ gen_opts: >
 ```
 
 Available directed streams:
+
 - `riscv_int_numeric_corner_stream`: Integer arithmetic corner cases
 - `riscv_load_store_rand_instr_stream`: Random load/store patterns
 - `riscv_loop_instr`: Loop instruction sequences
@@ -661,6 +690,7 @@ Available directed streams:
 - `riscv_multi_page_load_store_instr_stream`: Multi-page memory access
 
 ### Exception and Interrupt Testing
+
 The generator creates comprehensive exception handlers:
 
 - **Machine Mode Exceptions**: Illegal instruction, ECALL, EBREAK
@@ -669,6 +699,7 @@ The generator creates comprehensive exception handlers:
 - **Debug Mode Support**: Breakpoint and single-step debugging
 
 ### Privilege Mode Testing
+
 Support for multiple privilege modes:
 
 ```systemverilog
@@ -680,6 +711,7 @@ privileged_mode_t supported_privileged_mode[] = {
 ```
 
 ### Memory Management
+
 - **Virtual Memory**: SV32, SV39, SV48 page table generation
 - **Physical Memory Protection**: PMP region configuration
 - **Memory Ordering**: Fence instruction testing
@@ -688,18 +720,21 @@ privileged_mode_t supported_privileged_mode[] = {
 ## Integration with Simulators
 
 ### Supported Simulators
+
 - **Pyflow**: Python-based fast simulation
 - **VCS**: Synopsys VCS simulator
 - **Xcelium**: Cadence Xcelium simulator
 - **Verilator**: Open-source Verilog simulator
 
 ### ISS Integration
+
 - **Spike**: RISC-V ISS reference
 - **OVPsim**: Imperas OVP simulator
 - **Sail**: Formal RISC-V model
 - **Whisper**: SiFive's ISS
 
 ### Trace Comparison
+
 The framework supports automatic trace comparison between RTL and ISS:
 
 ```bash
@@ -712,21 +747,23 @@ python3 run.py --test=riscv_arithmetic_basic_test --simulator=vcs \
 ### Common Issues
 
 1. **Compilation Errors**:
+
    - Verify RISC-V GCC toolchain installation
    - Check `RISCV_GCC` environment variable
    - Ensure correct ISA and ABI settings
-
 2. **Generation Failures**:
+
    - Check Python dependencies (PyVSC)
    - Verify target configuration compatibility
    - Review test options for conflicts
-
 3. **Simulation Issues**:
+
    - Confirm simulator installation and licensing
    - Check simulator-specific configuration files
    - Verify environment variables
 
 ### Debug Options
+
 ```bash
 # Enable verbose logging
 python3 run.py --test=riscv_arithmetic_basic_test --verbose --simulator=pyflow

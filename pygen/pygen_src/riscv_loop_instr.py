@@ -160,7 +160,8 @@ class riscv_loop_instr(riscv_rand_instr_stream):
                     self.loop_init_instr[2 * i].imm == self.loop_init_val[i]
                     self.loop_init_instr[2 * i].comment = \
                         pkg_ins.format_string("init loop {} counter".format(i))
-            except Exception:
+            except Exception as e:
+                logging.critical(f"Exception :{e}")
                 logging.critical("Cannot randomize loop init1 instruction")
                 sys.exit(1)
             # Instruction to init loop limit
@@ -177,6 +178,7 @@ class riscv_loop_instr(riscv_rand_instr_stream):
                     self.loop_init_instr[2 * i + 1].comment = \
                         pkg_ins.format_string("init loop {} limit".format(i))
             except Exception:
+                logging.critical(f"Exception :{Exception}")
                 logging.critical("Cannot randomize loop init2 instruction")
                 sys.exit(1)
             # Branch target instruction, can be anything
