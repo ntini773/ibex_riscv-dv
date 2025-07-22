@@ -300,9 +300,9 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
 
     #Re-define gen_test_done() to override the base-class with an empty implementation.
     #Then, our own overriding gen_program() can append new test_done code.
-    def gen_test_done(self):
-        """Override the base class gen_test_done with an empty implementation."""
-        pass
+    # def gen_test_done(self):
+    #     """Override the base class gen_test_done with an empty implementation."""
+    #     pass
 
     def gen_init_section(self, hart):
         # This is a good location to put the test done and fail because PMP tests expect these
@@ -318,14 +318,14 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
         #     # Jump to main program
         #     self.instr_stream.append("j main")
         
-    #     # Add the gen_test_end functionality based on relevance 
-        self.gen_test_end(result=test_result_t.TEST_PASS, instr=instr)
-        self.instr_stream.append("test_done:")
-        self.instr_stream.extend(instr)
-        instr.clear()
-        self.gen_test_end(result=test_result_t.TEST_FAIL, instr=instr)
-        self.instr_stream.append("test_fail:")
-        self.instr_stream.extend(instr)
+        # # Add the gen_test_end functionality based on relevance 
+        # self.gen_test_end(result=test_result_t.TEST_PASS, instr=instr)
+        # self.instr_stream.append("test_done:")
+        # self.instr_stream.extend(instr)
+        # instr.clear()
+        # self.gen_test_end(result=test_result_t.TEST_FAIL, instr=instr)
+        # self.instr_stream.append("test_fail:")
+        # self.instr_stream.extend(instr)
 
 
         
