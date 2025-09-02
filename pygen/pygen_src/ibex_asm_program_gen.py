@@ -39,21 +39,9 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
         cfg.check_misa_init_val=0
         cfg.check_xstatus=0
         self.instr_stream.append(".section .text")
-        # if cfg.mtvec_mode == mtvec_mode_t.VECTORED:
-        #     self.gen_table(0,"m",self.instr_stream)
-        # self.instr_stream.append("j mtvec_handler")
         self.instr_stream.append(".globl _start")
         self.instr_stream.append(".option norvc")
-        # 0x0 debug mode entry
-        # self.instr_stream.append("j debug_rom")
-        # self.instr_stream.append(".align 3")
-        # # 0x8 debug mode exception handler
-        # self.instr_stream.append("j debug_exception")
-        # Align the start section to 0x80
-        # self.instr_stream.append(".align 7")
-        # self.instr_stream.append(".align 7")
-        # self.instr_stream.append(".option rvc")
-        # self.instr_stream.append("_start:")
+
     def gen_program(self):
         self.instr_stream.clear()
         # Generate program header
@@ -65,12 +53,6 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
                 # Generate kernel program section ->gen_kernel_sections(hart)
                 # ->self.gen_all_trap_handler(hart)
                  if not rcs.support_pmp:
-                    # self.gen_trap_handlers(hart)
-                    # self.gen_trap_handler_section(hart, "m", privileged_reg_t.MCAUSE,
-                    #                   privileged_reg_t.MTVEC, privileged_reg_t.MTVAL,
-                    #                   privileged_reg_t.MEPC, privileged_reg_t.MSCRATCH,
-                    #                   privileged_reg_t.MSTATUS, privileged_reg_t.MIE,
-                    #                   privileged_reg_t.MIP)
                     mode="m"
                     status= privileged_reg_t.MSTATUS
                     cause= privileged_reg_t.MCAUSE
@@ -94,7 +76,6 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
                     else:
                         self.instr_stream.append(".align {}".format(cfg.tvec_alignment))
                     tvec_name = tvec.name
-                    # logging.info("Generating {} trap handler for hart {}".format(tvec_name, hart))
                     self.gen_section(pkg_ins.get_label("{}_handler".format(tvec_name.lower()), hart), instr)
         self.instr_stream.append(".align 7")
         self.instr_stream.append(".option rvc")
@@ -103,9 +84,8 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
         for hart in range(cfg.num_of_harts):
             sub_program_name = []
             self.instr_stream.append(f"h{int(hart)}_start:")
-            if not cfg.bare_program_mode: # its zero 
-                # logging.info("cfg.bare_program_mode is set to 0, generating init section")
-                self.setup_misa() 
+            if not cfg.bare_program_mode:
+                self.setup_misa()
                 # Create all page tables
                 self.create_page_table(hart)
                 # Setup privileged mode registers and enter target privileged mode
@@ -224,20 +204,6 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
                                                                        cfg.gpr[0],
                                                                        pkg_ins.hart_prefix(hart),
                                                                        mode))
-        # The trap handler will occupy one 4KB page, it will be allocated one entry in
-        # the page table with a specific privileged mode.
-        # The mtvec_handler section is not needed now as it is placed above
-        # if rcs.SATP_MODE != satp_mode_t.BARE:
-        #     self.instr_stream.append(".align 12")
-        # else:
-        #     self.instr_stream.append(".align {}".format(cfg.tvec_alignment))
-        # # logging.info("instr_stream: %s", self.instr_stream)
-        # #instr contains mtvec handler by here
-        # logging.info("instr: %s", instr)
-        # tvec_name = tvec.name
-        # logging.info("Generating {} trap handler for hart {}".format(tvec_name, hart))
-        # self.gen_section(pkg_ins.get_label("{}_handler".format(tvec_name.lower()), hart), instr)
-        # # logging.info("instr_stream: %s", self.instr_stream)
 
 
         # Exception handler
@@ -283,27 +249,6 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
                         "mret"))
         self.gen_section(pkg_ins.get_label("ecall_handler", hart), instr)
 
-        
-    # Translated the code in SysVerilog (not verified)
-    # def gen_debug_rom(self, hart):
-    #     """
-    #     Generate a debug ROM program for the given hart and append its instructions to this object's instr_stream.
-    #     """
-    #     logging.info("Creating debug ROM for hart %d", hart)
-    #     # Create a new instance of riscv_asm_program_gen for the debug ROM
-    #     debug_rom = riscv_asm_program_gen()
-    #     debug_rom.cfg = self.cfg if hasattr(self, 'cfg') else cfg  # Use self.cfg if present, else global cfg
-    #     debug_rom.hart = hart
-    #     debug_rom.gen_program()
-    #     # Append the generated debug ROM instructions to this object's instruction stream
-    #     self.instr_stream.extend(debug_rom.instr_stream)
-
-    #Re-define gen_test_done() to override the base-class with an empty implementation.
-    #Then, our own overriding gen_program() can append new test_done code.
-    # def gen_test_done(self):
-    #     """Override the base class gen_test_done with an empty implementation."""
-    #     pass
-
     def gen_init_section(self, hart):
         # This is a good location to put the test done and fail because PMP tests expect these
         # sequences to be before the main function.
@@ -318,7 +263,7 @@ class ibex_asm_program_gen(riscv_asm_program_gen):
         #     # Jump to main program
         #     self.instr_stream.append("j main")
         
-        # # Add the gen_test_end functionality based on relevance 
+        # # Add the gen_test_end functionality based on relevance like the following one
         # self.gen_test_end(result=test_result_t.TEST_PASS, instr=instr)
         # self.instr_stream.append("test_done:")
         # self.instr_stream.extend(instr)

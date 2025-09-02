@@ -356,7 +356,6 @@ class riscv_asm_program_gen:
         misa = vsc.bit_t(rcs.XLEN)
         if rcs.XLEN == 32:
             misa[rcs.XLEN - 1:rcs.XLEN - 2] = 1
-            #misa[31:30] = 1
         elif rcs.XLEN == 64:
             misa[rcs.XLEN - 1:rcs.XLEN - 2] = 2
         else:
@@ -365,7 +364,6 @@ class riscv_asm_program_gen:
             self.instr_stream.append("{}csrr x15, {}".format(pkg_ins.indent,
                                                              hex(privileged_reg_t.MISA)))
         for group in rcs.supported_isa:
-            # logging.info("Setting MISA for group: {}".format(group.name))
             if group in [riscv_instr_group_t.RV32C,
                          riscv_instr_group_t.RV64C,
                          riscv_instr_group_t.RV128C]:
@@ -848,8 +846,6 @@ class riscv_asm_program_gen:
             instr.append("j {}{}mode_intr_vector_{}".format(pkg_ins.hart_prefix(hart), mode, i))
         if not cfg.disable_compressed_instr:
             instr.append(".option rvc;")
-        logging.info("Inside gen_interrupt_vector_table, instr: %s", instr)
-        
         for i in range(1, rcs.max_interrupt_vector_num):
             intr_handler = []
             pkg_ins.push_gpr_to_kernel_stack(
@@ -872,7 +868,6 @@ class riscv_asm_program_gen:
             intr_handler.extend(("j {}{}mode_intr_handler".format(pkg_ins.hart_prefix(hart), mode),
                                  "1: la x{}, test_done".format(cfg.scratch_reg),
                                  "jalr x0, x{}, 0".format(cfg.scratch_reg)))
-            # logging.info("Intr_handler:%s",intr_handler)
             self.gen_section(pkg_ins.get_label(
                 "{}mode_intr_vector_{}".format(mode, i), hart), intr_handler)
     # ECALL trap handler
@@ -1049,11 +1044,9 @@ class riscv_asm_program_gen:
         if label != "":
             string = pkg_ins.format_string("{}:".format(label), pkg_ins.LABEL_STR_LEN)
             self.instr_stream.append(string)
-            logging.info("Generating section: %s", label)
         for items in instr:
             string = pkg_ins.indent + items
             self.instr_stream.append(string)
-            # logging.info("string:{}".format(string))
         self.instr_stream.append("")
 
     # Dump performance CSRs if applicable
@@ -1138,21 +1131,17 @@ class riscv_asm_program_gen:
         opts = []
         for i in range(cfg.max_directed_instr_stream_seq):  # cfg.max_directed_instr_stream_seq=20 
             arg = "directed_instr_{}".format(i)
-            # logging.info("Control enters get_directed_instr_stream")
-            # logging.info("Arg={}".format(arg))  #'directed_instr_0': 'riscv_int_numeric_corner_stream,4' , rest are ''
-            stream_name_opts = "stream_name_{}".format(i) #'stream_name_0': ''
-            stream_freq_opts = "stream_freq_{}".format(i) #'stream_freq_0': 4 ,all freq_1,2,3..19  : 4
-            #only 'directed_instr_0': 'riscv_int_numeric_corner_stream,4' will pass the diff , the rest dont pass if and elif also
+            stream_name_opts = "stream_name_{}".format(i)
+            stream_freq_opts = "stream_freq_{}".format(i)
             if cfg.args_dict[arg]:
                 val = cfg.args_dict[arg]
-                # logging.info("Val={}".format(val)) #Val=riscv_int_numeric_corner_stream,4
                 opts = val.split(",")
                 if len(opts) != 2:
                     logging.critical(
                         "Incorrect directed instruction format : %0s, expect: name,ratio", val)
                     sys.exit(1)
                 else:
-                    self.add_directed_instr_stream(opts[0], int(opts[1]))  #add_directed_instr_stream(riscv_int_numeric_corner_stream,4) 
+                    self.add_directed_instr_stream(opts[0], int(opts[1]))
             elif cfg.args_dict[stream_name_opts] and cfg.args_dict[stream_freq_opts]:
                 stream_name = cfg.args_dict[stream_name_opts]
                 stream_freq = cfg.args_dict[stream_freq_opts]
@@ -1175,7 +1164,6 @@ class riscv_asm_program_gen:
             for i in range(instr_insert_cnt):
                 name = "{}_{}".format(instr_stream_name, i)
                 object_h = factory(instr_stream_name)
-                logging.info("I found object_h: %s", object_h)
                 object_h.name = name
                 if not object_h:
                     logging.critical("Cannot create instr stream %0s", name)
