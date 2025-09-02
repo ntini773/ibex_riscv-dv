@@ -84,9 +84,6 @@ class riscv_instr_base_test:
 
 start_time = time.time()
 riscv_base_test_ins = riscv_instr_base_test()
-# logging.info("cfg parameters:")
-# for k, v in vars(cfg).items():
-#     logging.info(f"cfg.{k} = {repr(v)}")
 if cfg.argv.gen_test == "riscv_instr_base_test":
     riscv_base_test_ins.run()
     end_time = time.time()

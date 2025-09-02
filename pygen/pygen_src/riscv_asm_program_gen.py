@@ -68,8 +68,7 @@ class riscv_asm_program_gen:
         for hart in range(cfg.num_of_harts):
             sub_program_name = []
             self.instr_stream.append(f"h{int(hart)}_start:")
-            if not cfg.bare_program_mode: # its zero 
-                # logging.info("cfg.bare_program_mode is set to 0, generating init section")
+            if not cfg.bare_program_mode: 
                 self.setup_misa() 
                 # Create all page tables
                 self.create_page_table(hart)
@@ -81,7 +80,7 @@ class riscv_asm_program_gen:
             If PMP is supported, we want to generate the associated trap handlers and the test_done
             section at the start of the program so we can allow access through the pmpcfg0 CSR
             '''
-            if(rcs.support_pmp and not(cfg.bare_program_mode)): #support_pmp=0
+            if(rcs.support_pmp and not(cfg.bare_program_mode)):
                 self.gen_trap_handlers(hart)
                 # Ecall handler
                 self.gen_ecall_handler(hart)
@@ -362,7 +361,7 @@ class riscv_asm_program_gen:
             misa[rcs.XLEN - 1:rcs.XLEN - 2] = 2
         else:
             misa[rcs.XLEN - 1:rcs.XLEN - 2] = 3
-        if cfg.check_misa_init_val: #its 0
+        if cfg.check_misa_init_val:
             self.instr_stream.append("{}csrr x15, {}".format(pkg_ins.indent,
                                                              hex(privileged_reg_t.MISA)))
         for group in rcs.supported_isa:
@@ -406,8 +405,6 @@ class riscv_asm_program_gen:
                                                         hex(misa.get_val())),
                                   "{}csrw {}, x{}".format(pkg_ins.indent,
                                                           hex(privileged_reg_t.MISA), cfg.gpr[0])))
-        # logging.info("{}li x{}, {}".format(pkg_ins.indent, cfg.gpr[0],
-        #                                                 hex(misa.get_val())))
 
     # Write to the signature_addr with values to indicate to the core testbench
     # that is safe to start sending interrupt and debug stimulus
@@ -622,8 +619,6 @@ class riscv_asm_program_gen:
             if cfg.require_signature_addr:
                 # TODO
                 pass
-        # logging.info("Privileged mode switch routine generation...done")
-        # logging.info("Instruction stream length: {}".format(instr))
         self.instr_stream.extend(instr)
 
     # Setup EPC before entering target privileged mode
@@ -806,13 +801,8 @@ class riscv_asm_program_gen:
             self.instr_stream.append(".align 12")
         else:
             self.instr_stream.append(".align {}".format(cfg.tvec_alignment))
-        # logging.info("instr_stream: %s", self.instr_stream)
-        #instr contains mtvec handler by here
-        logging.info("instr: %s", instr)
         tvec_name = tvec.name
-        logging.info("Generating {} trap handler for hart {}".format(tvec_name, hart))
         self.gen_section(pkg_ins.get_label("{}_handler".format(tvec_name.lower()), hart), instr)
-        # logging.info("instr_stream: %s", self.instr_stream)
 
 
         # Exception handler
@@ -841,7 +831,6 @@ class riscv_asm_program_gen:
                       # use JALR to jump to test_done.
                       "1: la x{}, test_done".format(cfg.scratch_reg),
                       "jalr x1, x{}, 0".format(cfg.scratch_reg)))
-        # logging.info("Instr:{}".format(instr.items()))
         self.gen_section(pkg_ins.get_label("{}mode_exception_handler".format(mode), hart), instr)
 
     # Generate for interrupt vector table

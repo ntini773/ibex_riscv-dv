@@ -9,6 +9,7 @@
 
 * riscv_int_numeric_corner_stream
 * riscv_jal_instr
+* riscv_load_store_rand_instr_stream
 
 **Note:**
 
